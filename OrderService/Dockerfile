@@ -15,3 +15,6 @@ RUN dotnet publish OrderService/OrderService.csproj -c Release -o /app/pub /p:Us
 FROM mcr.microsoft.com/dotnet/aspnet:9.0
 WORKDIR app/publish
 COPY --from=pub /app/pub .
+
+EXPOSE 5000
+ENTRYPOINT dotnet OrderService.dll --urls http://+:5000

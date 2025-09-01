@@ -1,0 +1,53 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.VC.db
+*.VC.VC.opendb
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+build/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+*.log
+
+# Rider
+.idea/
+
+# ReSharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# Visual Studio Code
+.vscode/
+
+# NuGet
+*.nupkg
+*.snupkg
+packages/
+.nuget/
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Mac
+.DS_Store
+
+# Docker temporary files
+docker-compose.override.yml
+**/Dockerfile.*.tmp
+**/docker-compose.*.tmp
+
+# Publish folder
+publish/

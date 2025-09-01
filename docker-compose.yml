@@ -1,0 +1,15 @@
+version: "3.9"
+
+services:
+  nats:
+    image: nats:latest
+    ports:
+        - "4222:4222"
+        - "8222:8222"
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    ports:
+        - "1433:1433"
+    environment:
+        SA_PASSWORD: "webdir123R"
+        ACCEPT_EULA: "Y"

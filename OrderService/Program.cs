@@ -12,11 +12,24 @@ internal class Program
 
         builder.Services.AddDbContext<OrderDbContext>(o => o.UseSqlServer(builder.Configuration.GetConnectionString("OrdersDb")));
 
-        builder.Services.AddSingleton<NatsConnection>(sp => new(NatsOpts.Default with
+        builder.Services.AddSingleton<NatsConnection>(sp =>
         {
-            Url = "nats://localhost:4222",
-            SerializerRegistry = new NatsJsonContextSerializerRegistry(OrderJsonContext.Default)
-        }));
+            var natshost = builder.Configuration["NatsHost"];
+            Console.WriteLine($"NATS host: {natshost}");
+            if (natshost is null)
+            {
+                throw new Exception("NATS host was not found");
+            }
+
+            var natsUrl = $"nats://{natshost}:4222";
+            Console.WriteLine($"NATS URL: {natsUrl}");
+
+            return new(NatsOpts.Default with
+            {
+                Url = natsUrl,
+                SerializerRegistry = new NatsJsonContextSerializerRegistry(OrderJsonContext.Default)
+            });
+        });
 
         builder.Services.AddSingleton<Strings>();
 
@@ -68,6 +81,17 @@ internal class Program
             Console.WriteLine($"Published.");
 
             return Results.Created($"/{order.Id}", order);
+        });
+
+        app.MapGet("/health", () =>
+        {
+            var health = new
+            {
+                Healthy = true,
+                Environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"),
+            };
+
+            return Results.Ok(health);
         });
 
         Console.WriteLine($"Built the app and its pipeline.");

@@ -9,11 +9,24 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<BillingDbContext>(o => o.UseSqlServer(builder.Configuration.GetConnectionString("BillingDb")));
 
-builder.Services.AddSingleton<NatsConnection>(sp => new(NatsOpts.Default with
+builder.Services.AddSingleton<NatsConnection>(sp =>
 {
-    Url = "nats://localhost:4222",
-    SerializerRegistry = new NatsJsonContextSerializerRegistry(OrderJsonContext.Default)
-}));
+    var natshost = builder.Configuration["NatsHost"];
+    Console.WriteLine($"NATS host: {natshost}");
+    if (natshost is null)
+    {
+        throw new Exception("NATS host was not found");
+    }
+
+    var natsUrl = $"nats://{natshost}:4222";
+    Console.WriteLine($"NATS URL: {natsUrl}");
+
+    return new(NatsOpts.Default with
+    {
+        Url = natsUrl,
+        SerializerRegistry = new NatsJsonContextSerializerRegistry(OrderJsonContext.Default)
+    });
+});
 
 builder.Services.AddSingleton<Strings>();
 
@@ -49,6 +62,17 @@ using (var scope = app.Services.CreateScope())
         }
     }
 }
+
+app.MapGet("/health", () =>
+{
+    var health = new
+    {
+        Healthy = true,
+        Environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"),
+    };
+
+    return Results.Ok(health);
+});
 
 Console.WriteLine($"Launching the NATS subscriber for the billing service.");
 

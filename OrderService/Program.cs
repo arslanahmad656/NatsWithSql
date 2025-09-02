@@ -55,6 +55,12 @@ internal class Program
             }
         });
 
+        app.MapGet("/orders", async (OrderDbContext db) =>
+        {
+            var orders = await db.Orders.AsNoTracking().ToListAsync().ConfigureAwait(false);
+            return Results.Ok(orders);
+        });
+
         app.MapPost("/orders", async (Order order, OrderDbContext db, NatsConnection nats, Strings strings) =>
         {
             Console.WriteLine($"Inserting orders.");

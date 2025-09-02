@@ -63,6 +63,30 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+app.Use(async (context, next) =>
+{
+    try
+    {
+        await next(context);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error occurred while handling the request: {context.Request.Path}. {ex.Message}");
+
+        context.Response.StatusCode = 500;
+        await context.Response.WriteAsJsonAsync(new
+        {
+            ex.Message,
+        });
+    }
+});
+
+app.MapGet("/bills", async (BillingDbContext db) =>
+{
+    var bills = await db.Bills.AsNoTracking().ToListAsync().ConfigureAwait(false);
+    return Results.Ok(bills);
+});
+
 app.MapGet("/health", () =>
 {
     var health = new

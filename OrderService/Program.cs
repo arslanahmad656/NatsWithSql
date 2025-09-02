@@ -5,8 +5,9 @@ using Shared;
 
 internal class Program
 {
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
+        Console.WriteLine($"Inititating the order service.");
         var builder = WebApplication.CreateBuilder(args);
 
         builder.Services.AddDbContext<OrderDbContext>(o => o.UseSqlServer(builder.Configuration.GetConnectionString("OrdersDb")));
@@ -19,6 +20,8 @@ internal class Program
 
         builder.Services.AddSingleton<Strings>();
 
+        Console.WriteLine($"Added services for the order service.");
+        Console.WriteLine($"Building the app and its pipeline.");
         var app = builder.Build();
 
         app.Use(async (context, next) =>
@@ -66,6 +69,34 @@ internal class Program
 
             return Results.Created($"/{order.Id}", order);
         });
+
+        Console.WriteLine($"Built the app and its pipeline.");
+        Console.WriteLine($"Running the migrations for the order service.");
+        using (var scope = app.Services.CreateScope())
+        {
+            var maxTries = 10;
+            var interval = TimeSpan.FromSeconds(3);
+            while (true)
+            {
+                try
+                {
+                    var db = scope.ServiceProvider.GetRequiredService<OrderDbContext>();
+                    await db.Database.MigrateAsync().ConfigureAwait(false);
+                    Console.WriteLine($"Migrations completed for the order service.");
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    Console.Write($"Error occurred while migrating: {ex.Message}");
+                    maxTries--;
+                    await Task.Delay(interval).ConfigureAwait(false);
+                    if (maxTries <= 0)
+                    {
+                        throw new Exception($"Could not perform migrations after many tries.");
+                    }
+                }
+            }
+        }
 
         app.Run();
     }

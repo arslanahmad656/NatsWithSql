@@ -17,4 +17,4 @@ WORKDIR app/publish
 COPY --from=pub /app/pub .
 
 EXPOSE 5000
-ENTRYPOINT dotnet OrderService.dll --urls http://+:5000
+ENTRYPOINT dotnet OrderService.dll --urls=http://+:5000

@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using NATS.Client.Core;
 using Shared;
 
+Console.WriteLine($"Initiating billing service.");
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<BillingDbContext>(o => o.UseSqlServer(builder.Configuration.GetConnectionString("BillingDb")));
@@ -15,9 +17,40 @@ builder.Services.AddSingleton<NatsConnection>(sp => new(NatsOpts.Default with
 
 builder.Services.AddSingleton<Strings>();
 
+Console.WriteLine($"Added services to the billing service.");
+
 var app = builder.Build();
 
 Console.WriteLine($"Launching the listener.");
+
+Console.WriteLine($"Applying migrations for the billing service.");
+using (var scope = app.Services.CreateScope())
+{
+    var maxTries = 100;
+    var interval = TimeSpan.FromSeconds(3);
+    while (true)
+    {
+        try
+        {
+            var db = scope.ServiceProvider.GetRequiredService<BillingDbContext>();
+            await db.Database.MigrateAsync().ConfigureAwait(false);
+            Console.WriteLine($"Migrations completed for the billing service.");
+            break;
+        }
+        catch (Exception ex)
+        {
+            Console.Write($"Error occurred while migrating: {ex.Message}");
+            maxTries--;
+            await Task.Delay(interval).ConfigureAwait(false);
+            if (maxTries <= 0)
+            {
+                throw new Exception($"Could not perform migrations after many tries.");
+            }
+        }
+    }
+}
+
+Console.WriteLine($"Launching the NATS subscriber for the billing service.");
 
 _ = Task.Run(async () =>
 {
@@ -63,4 +96,8 @@ _ = Task.Run(async () =>
     }
 });
 
+Console.WriteLine($"Everything set. Launching the app.");
+
 app.Run();
+
+Console.WriteLine($"App has been launched.");

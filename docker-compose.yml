@@ -13,3 +13,21 @@ services:
     environment:
         SA_PASSWORD: "webdir123R"
         ACCEPT_EULA: "Y"
+    depends_on:
+        - nats
+  orderservice:
+    image: arslanahmad656/nats-sql-orderservice:0.4
+    ports:
+        - "9100:5000"
+    depends_on:
+        - nats
+        - sqlserver
+  billingservice:
+    image: arslanahmad656/nats-sql-billingservice:0.4
+    ports:
+        - "9101:5000"
+    depends_on:
+        - nats
+        - sqlserver
+        - orderservice
+    
